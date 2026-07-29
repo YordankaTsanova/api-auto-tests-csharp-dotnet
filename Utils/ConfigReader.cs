@@ -9,20 +9,29 @@ namespace ApiTestDemo.Utils
 
         static ConfigReader()
         {
-            // Locates appsettings.json in the execution directory
             Configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
         }
 
-        public static string BaseUrl => Configuration["BaseUrl"] 
-        ?? throw new InvalidOperationException("BaseUrl is missing from appsettings.json");
+        public static string BaseUrl => GetRequiredSetting("BaseUrl", "API_BASE_URL");
 
-        public static string AdminUsername => Configuration["AdminCredentials:Username"] 
-        ?? throw new InvalidOperationException("AdminCredentials:Username is missing from appsettings.json");
+        public static string AdminUsername => GetRequiredSetting("AdminCredentials:Username", "API_ADMIN_USERNAME");
 
-        public static string AdminPassword => Configuration["AdminCredentials:Password"] 
-        ?? throw new InvalidOperationException("AdminCredentials:Password is missing from appsettings.json");
+        public static string AdminPassword => GetRequiredSetting("AdminCredentials:Password", "API_ADMIN_PASSWORD");
+
+        private static string GetRequiredSetting(string configKey, string envVarName)
+        {
+            var value = Environment.GetEnvironmentVariable(envVarName);
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                value = Configuration[configKey];
+            }
+
+            return string.IsNullOrWhiteSpace(value)
+                ? throw new InvalidOperationException($"{configKey} is missing from appsettings.json or environment variables")
+                : value;
+        }
     }
 }

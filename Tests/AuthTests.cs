@@ -10,7 +10,7 @@ namespace ApiTestDemo.Tests
     public class AuthTests
     {
         [Test]
-        public async Task TestAuthentication()
+        public async Task Authenticate_WithValidCredentials_ShouldSucceed()
         {
             var authPayload = TestDataLoader.LoadJson<AuthModel>("authPayload.json");
 
@@ -20,8 +20,7 @@ namespace ApiTestDemo.Tests
             var authClient = new AuthClient();
             var response = await authClient.PostAuthTokenAsync(authPayload);
 
-            Assert.That(response.IsSuccessful, Is.True, $"Auth failed with status: {response.StatusCode}");
-            Assert.That((int)response.StatusCode, Is.EqualTo(200));
+            TestAssertions.AssertSuccessfulResponse(response, "Authentication request");
         }
     }
 }

@@ -1,38 +1,42 @@
 using NUnit.Framework;
-using ApiTestDemo.Endpoints; // Ensure your BookingClient namespace is included
+using ApiTestDemo.Endpoints;
 using ApiTestDemo.Models;
 using ApiTestDemo.Utils;
 
 namespace ApiTestDemo.Tests
 {
     [TestFixture]
-    public class BookingTests
+    public class BookingTests : TestBase
     {
-        private BookingClient _bookingClient;
-
-        [SetUp]
-        public void Setup()
-        {
-            // Initialize your client before each test runs
-            _bookingClient = new BookingClient();
-        }
 
         [Test]
-        public async Task TestCreateBooking()
+        public async Task CreateBooking_WithValidPayload_ShouldReturnCreatedBooking()
         {
-            // 1. Load payload from TestData/createBookingPayload.json
             var bookingPayload = TestDataLoader.LoadJson<BookingModel>("createBookingPayload.json");
 
-            // 2. Validate local JSON payload data
             Assert.That(bookingPayload.Firstname, Is.EqualTo("Jim"));
             Assert.That(bookingPayload.Totalprice, Is.EqualTo(111));
 
-            // 3. Send the POST request to the API
-            var response = await _bookingClient.CreateBookingAsync(bookingPayload);
+            var response = await BookingClient.CreateBookingAsync(bookingPayload);
 
-            // 4. Assert HTTP status code and response success
-            Assert.That(response.IsSuccessful, Is.True, $"Request failed with status code: {response.StatusCode}");
-            Assert.That((int)response.StatusCode, Is.EqualTo(200));
+            TestAssertions.AssertSuccessfulResponse(response, "Create booking request");
+
+            Assert.That(response.Data, Is.Not.Null, "Response body should not be null");
+            Assert.That(response.Data.Bookingid, Is.GreaterThan(0), "API should generate a positive booking ID");
+            Assert.That(response.Data.Booking.Firstname, Is.EqualTo(bookingPayload.Firstname));
+            Assert.That(response.Data.Booking.Lastname, Is.EqualTo(bookingPayload.Lastname));
+        }
+
+        [Test]
+        public async Task GetBookingIds_ShouldReturnAListOfBookingIds()
+        {
+            var response = await BookingClient.GetBookingIdsAsync();
+
+            TestAssertions.AssertSuccessfulResponse(response, "Get booking IDs request");
+
+            Assert.That(response.Data, Is.Not.Null);
+            Assert.That(response.Data, Is.Not.Empty, "Expected booking IDs list to contain items.");
+            Assert.That(response.Data[0].Bookingid, Is.GreaterThan(0));
         }
     }
 }
